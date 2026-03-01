@@ -22,7 +22,7 @@
 // ── Python module paths ────────────────────────────────────────────────────
 const WEBRTC_HANDLER = "smartflo.tatatelebiz_smartflo_integration.doctype.agent_mapping.webrtc_dialer.test_softphone_call";
 const PSTN_HANDLER = "smartflo.tatatelebiz_smartflo_integration.doctype.agent_mapping.pstn_dialer.test_pstn_call";
-const STATUS_HANDLER = "smartflo.tatatelebiz_smartflo_integration.doctype.agent_mapping.webrtc_dialer.check_agent_online";
+const WEBRTC_ONLINE_CHECK = "smartflo.tatatelebiz_smartflo_integration.doctype.agent_mapping.webrtc_dialer.check_agent_online";
 const HANGUP_HANDLER = "smartflo.tatatelebiz_smartflo_integration.api.client.hangup_call";
 const TRANSFER_HANDLER = "smartflo.tatatelebiz_smartflo_integration.api.client.call_operation";
 const CLOUDPHONE_URL = "https://cloudphone.tatateleservices.com/";
