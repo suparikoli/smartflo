@@ -11,8 +11,8 @@
         "smartflo_agent_id",
         "call_forward_number",
         "did_number",
-        "intercom",
-        "test_connection"
+        "test_softphone_call",
+        "test_pstn_call"
     ],
     "fields": [
         {
@@ -34,10 +34,10 @@
             "reqd": 1
         },
         {
-            "description": "Enter your short 3-or-4 digit Agent Extension/Node ID here (e.g. 1001, 102).",
+            "description": "Enter your Smartflo Intercom ID / Agent Extension ID (e.g. 1006). This is the auto-generated intercom number shown in the Smartflo agent settings.",
             "fieldname": "smartflo_agent_id",
             "fieldtype": "Data",
-            "label": "Agent Extension ID"
+            "label": "Agent Extension ID (Intercom ID)"
         },
         {
             "description": "Enter the 10-digit mobile number your Smartflo agent forwards to.",
@@ -51,20 +51,22 @@
             "label": "Caller ID"
         },
         {
-            "fieldname": "intercom",
-            "fieldtype": "Data",
-            "label": "Intercom Number"
+            "depends_on": "eval:doc.device_type == 'Softphone (WebRTC)'",
+            "fieldname": "test_softphone_call",
+            "fieldtype": "Button",
+            "label": "Test Softphone (WebRTC) Call"
         },
         {
-            "fieldname": "test_connection",
+            "depends_on": "eval:doc.device_type == 'PSTN (Mobile/Landline)'",
+            "fieldname": "test_pstn_call",
             "fieldtype": "Button",
-            "label": "Test Outbound Call Settings"
+            "label": "Test PSTN Call"
         }
     ],
     "grid_page_length": 50,
     "index_web_pages_for_search": 1,
     "links": [],
-    "modified": "2026-03-01 14:00:52.108329",
+    "modified": "2026-03-01 14:10:00.000000",
     "modified_by": "Administrator",
     "module": "Tatatelebiz Smartflo integration",
     "name": "Agent Mapping",

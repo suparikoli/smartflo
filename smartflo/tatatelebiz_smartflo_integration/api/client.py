@@ -169,12 +169,12 @@ def call_operation(call_id, operation_type, target_user=None):
     if int(operation_type) == 4:
         if not target_user:
             frappe.throw("Target User is required for Call Transfer.")
-        
-        target_mapping = frappe.db.get_value("Agent Mapping", {"user": target_user}, "intercom")
-        if not target_mapping:
-            frappe.throw(f"No Intercom Number found in Agent Mapping for target user ({target_user}).")
-        
-        payload["intercom"] = target_mapping
+
+        target_agent_id = frappe.db.get_value("Agent Mapping", {"user": target_user}, "smartflo_agent_id")
+        if not target_agent_id:
+            frappe.throw(f"No Agent Extension ID found in Agent Mapping for user ({target_user}).")
+
+        payload["intercom"] = target_agent_id
 
     api = SmartfloAPI()
     try:

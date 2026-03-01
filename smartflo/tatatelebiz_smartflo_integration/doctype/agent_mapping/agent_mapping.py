@@ -1,45 +1,34 @@
 # Copyright (c) 2026, Mithtech Innovative Solutions PVT LTD and contributors
 # For license information, please see license.txt
+#
+# agent_mapping.py — AgentMapping Document controller
+#
+# This file is intentionally minimal. All outbound routing logic has been
+# moved to dedicated modules alongside this doctype:
+#
+#   webrtc_dialer.py  —  Softphone (WebRTC) routing via agent extension ID
+#   pstn_dialer.py    —  PSTN routing via a physical forwarding number
+#
+# The Agent Mapping form (agent_mapping.js) calls those modules directly
+# via frappe.call() using their full Python module paths.
 
-# import frappe
 from frappe.model.document import Document
-from smartflo.tatatelebiz_smartflo_integration.api.client import SmartfloAPI
-import frappe
+
 
 class AgentMapping(Document):
-    @frappe.whitelist()
-    def test_smartflo_agent(self, destination_number):
-        import re
-        def sanitize_local(num):
-            if not num: return ""
-            return re.sub(r"[^\d]", "", str(num))
+    """
+    Maps a Frappe User to their Smartflo telephony configuration.
 
-        try:
-            # Route Determination
-            if self.device_type == "PSTN (Mobile/Landline)":
-                if not self.call_forward_number:
-                    frappe.throw("Call Forwarding Number is required for PSTN routing.")
-                agent_number = sanitize_local(self.call_forward_number)
-            else:
-                if not self.smartflo_agent_id:
-                    frappe.throw("Agent Extension ID is required for Softphone routing.")
-                agent_number = sanitize_local(self.smartflo_agent_id)
+    Fields:
+        user                — linked Frappe User (unique, required)
+        device_type         — "Softphone (WebRTC)" or "PSTN (Mobile/Landline)"
+        smartflo_agent_id   — agent extension ID (Softphone path)
+        call_forward_number — physical number to bridge (PSTN path)
+        did_number          — outbound caller ID for this agent
+        intercom            — internal extension for call transfer
 
-            caller_id = sanitize_local(self.did_number)
-            number = sanitize_local(destination_number)
-
-            # E.164 Tata Structural Guard
-            if len(caller_id) == 10: caller_id = "91" + caller_id
-            if len(agent_number) == 10: agent_number = "91" + agent_number
-            if len(number) == 10: number = "91" + number
-
-            api = SmartfloAPI()
-            res = api.make_outbound_session_call(
-                agent_number=agent_number,
-                destination_number=number,
-                caller_id=caller_id
-            )
-            return res
-        except Exception as e:
-            frappe.log_error("Agent Mapping Test Connection Failed", str(e))
-            frappe.throw(str(e))
+    Routing logic is handled by:
+        webrtc_dialer.test_softphone_call()
+        pstn_dialer.test_pstn_call()
+    """
+    pass
