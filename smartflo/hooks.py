@@ -27,7 +27,7 @@ app_license = "mit"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/smartflo/css/smartflo.css"
 app_include_js = [
-    "/assets/smartflo/js/smartflo.js",
+    "/assets/smartflo/js/smartflo_dialer.js",
     "/assets/smartflo/js/smartflo_phone_panel.js",
 ]
 

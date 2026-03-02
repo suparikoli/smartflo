@@ -12,6 +12,7 @@
 # The Agent Mapping form (agent_mapping.js) calls those modules directly
 # via frappe.call() using their full Python module paths.
 
+import frappe
 from frappe.model.document import Document
 
 
@@ -31,4 +32,13 @@ class AgentMapping(Document):
         webrtc_dialer.test_softphone_call()
         pstn_dialer.test_pstn_call()
     """
-    pass
+@frappe.whitelist()
+def get_phone_mask_setting():
+    """
+    Returns the 'hide_field' setting for the current user from Agent Mapping.
+    """
+    user = frappe.session.user
+    hide_field = frappe.db.get_value("Agent Mapping", {"user": user}, "hide_field")
+    return {
+        "hide_field": bool(hide_field)
+    }

@@ -63,7 +63,12 @@
                 console.log("[Smartflo WebRTC] smartflo_incoming_call event received:", msg);
                 var caller = (msg && (msg.caller || msg.from)) || "Unknown";
                 _call_ref_id = (msg && (msg.uuid || msg.call_id)) || null;
-                show_panel("incoming", caller);
+
+                // Only automatically show the popup for INCOMING calls.
+                // Outbound calls should remain silent as per user requirements.
+                if (msg.direction === "Incoming") {
+                    show_panel("incoming", caller);
+                }
             });
         } catch (e) {
             console.error("[Smartflo WebRTC] Error in init_realtime:", e);
