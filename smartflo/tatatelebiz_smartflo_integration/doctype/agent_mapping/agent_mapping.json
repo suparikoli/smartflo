@@ -11,6 +11,7 @@
         "smartflo_agent_id",
         "call_forward_number",
         "did_number",
+        "hide_field",
         "test_softphone_call",
         "test_pstn_call"
     ],
@@ -49,6 +50,13 @@
             "fieldname": "did_number",
             "fieldtype": "Phone",
             "label": "Caller ID"
+        },
+        {
+            "default": "0",
+            "description": "Hide phone number fields visually for this agent on Lead, Customer, Contact, and Opportunity.",
+            "fieldname": "hide_field",
+            "fieldtype": "Check",
+            "label": "Hide field"
         },
         {
             "depends_on": "eval:doc.device_type == 'Softphone (WebRTC)'",

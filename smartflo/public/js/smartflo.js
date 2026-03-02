@@ -123,10 +123,26 @@ if (frappe && frappe.realtime) {
 }
 
 // Global Injector for CRM Forms
-['Lead', 'Customer', 'Contact'].forEach(doctype => {
+['Lead', 'Customer', 'Contact', 'Opportunity'].forEach(doctype => {
     frappe.ui.form.on(doctype, {
         refresh: function (frm) {
-            let phone_field = frm.doc.mobile_no || frm.doc.phone || frm.doc.phone_no || (frm.doc.contact_person ? frm.doc.contact_phone : null);
+            let phone_field = frm.doc.mobile_no || frm.doc.phone || frm.doc.phone_no || frm.doc.whatsapp_no || (frm.doc.contact_person ? frm.doc.contact_phone : null);
+
+            if (!frm.is_new() && frappe.session.user !== "Administrator") {
+                frappe.db.get_value('Agent Mapping', { user: frappe.session.user }, 'hide_field')
+                    .then(r => {
+                        let values = r.message;
+                        if (values && values.hide_field) {
+                            const fields_to_hide = ['mobile_no', 'phone', 'phone_no', 'whatsapp_no', 'contact_phone'];
+                            fields_to_hide.forEach(f => {
+                                if (frm.fields_dict[f]) {
+                                    frm.set_df_property(f, 'hidden', 1);
+                                }
+                            });
+                        }
+                    });
+            }
+
             if (phone_field) {
                 frm.add_custom_button(__('📞 Call via Smartflo'), function () {
                     let d = new frappe.ui.Dialog({
@@ -135,7 +151,7 @@ if (frappe && frappe.realtime) {
                             {
                                 label: 'Destination Number',
                                 fieldname: 'destination_number',
-                                fieldtype: 'Phone',
+                                fieldtype: 'Data',
                                 default: phone_field,
                                 reqd: 1,
                                 description: 'Target mobile or landline'
