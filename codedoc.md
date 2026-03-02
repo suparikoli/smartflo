@@ -66,31 +66,29 @@ The app follows the standard Frappe application architecture — Python controll
 ```
 smartflo/                               # Repository root
 ├── README.md
-├── check_settings.py                   # Standalone script to check settings
-├── dial_test.py                        # Standalone dial test script (not part of app)
+├── codedoc.md                          # This documentation
 ├── license.txt
 ├── pyproject.toml                      # Python project config + ruff linting
 ├── smartflo_api_docs.md                # External Smartflo API reference (docs)
 │
 └── smartflo/                           # Python package (the Frappe app)
     ├── __init__.py
-    ├── check.py                        # Ad-hoc connection/check utility
-    ├── dial_test.py
     ├── hooks.py                        # Frappe app hooks (app metadata, JS includes)
     ├── modules.txt                     # Module name declaration
     ├── patches.txt                     # Database migration patches
-    ├── test_db.py                      # Ad-hoc DB test script
-    ├── test_flow.py                    # Ad-hoc call flow test script
     │
     ├── config/                         # (Reserved for app config)
+    ├── desktop_icon/                   # Frappe Desktop Icon fixture
+    │   └── smartflo.json               #   Custom logo + link for the app grid icon
     ├── patches/                        # Database patch files
     ├── templates/                      # Frappe web templates
-    ├── www/                            # Web pages
     │
     ├── public/                         # Static assets (served by Nginx)
+    │   ├── images/
+    │   │   └── smartflo_logo.png       # App logo (used in workspace sidebar & desk icon)
     │   └── js/
-    │       ├── smartflo.js             # Global desk-injected call widget
-    │       └── smartflo_phone_panel.js         # Premium glassmorphism softphone panel (Notification based)
+    │       ├── smartflo.js             # Global desk-injected call widget & interceptors
+    │       └── smartflo_phone_panel.js # Premium glassmorphism softphone panel
     │
     └── tatatelebiz_smartflo_integration/   # Main Frappe module
         ├── __init__.py
@@ -329,46 +327,40 @@ User clicks "Test PSTN Call"
 
 ```
 User clicks "Test Softphone Call"
-  → frappe.call(webrtc_dialer.check_agent_online)
-      offline? → msgprint with 🔗 cloudphone link — STOP
+  → navigator.mediaDevices.getUserMedia({audio: true})
+      denied? → show guidance message and STOP
+  → frappe.call(WEBRTC_ONLINE_CHECK = webrtc_dialer.check_agent_online)
+      offline? → non-blocking warning (call still proceeds)
   → prompt for destination number
   → fire_webrtc_call(frm, destination_number)
       → window.smartflo_webrtc.show_panel_for_outbound(destination_number)
-          → Softphone panel appears immediately (status = "Connecting…")
+          → Softphone panel (smartflo_phone_panel.js) appears immediately
       → frappe.call(webrtc_dialer.test_softphone_call)
-          → Smartflo click-to-call fires → Smartflo rings agent's extension
+          → Smartflo click-to-call fires → rings agent's CloudPhone extension
           → Agent answers on their Smartflo CloudPhone
-          → Realtime events update the ERPNext panel to "Active"
-          → Panel buttons (Mute, End, Transfer) control the call via API
+          → Realtime event / callback → window.smartflo_webrtc.set_active(uuid)
+          → Panel transitions to "Active" state with Mute, End, Transfer buttons
 ```
 
 **`webrtc_dialer.py` — key components:**
-- `check_agent_online(agent_mapping_name)` — Hits Smartflo extension status API.
-- `test_softphone_call(agent_mapping_name, destination_number)` — Initiates outbound call.
-- `get_webrtc_credentials()` — **Stubbed.** Returns `None` for backward compatibility with old cached JS.
+- `check_agent_online(agent_mapping_name)` — Hits Smartflo extension status API. Fails open (returns `{"online": True}`) on timeout so network issues don't block calls.
+- `test_softphone_call(agent_mapping_name, destination_number)` — Initiates outbound call. Returns structured `{"_status": ...}` dicts.
+- `get_webrtc_credentials()` — **Stubbed.** Returns `None` for backward compatibility.
 - `get_agent_users(...)` — Search function for the Transfer dropdown.
 
+**`agent_mapping.js` — key constants:**
 
-
-**`webrtc_dialer.py` — key points:**
-- `check_agent_online(agent_mapping_name)` `@frappe.whitelist()` — hits `GET /v1/extension_status/<agent_id>`. Falls back to `{"online": True}` on timeout or unknown endpoint (fail-open approach so a network issue doesn't block calls).
-- `test_softphone_call()` also returns structured `{"_status": ...}` dicts for consistency.
-
-**`agent_mapping.js` — WebRTC Call Dialog (`show_webrtc_call_dialog`)**
-
-A `frappe.ui.Dialog` opened before the API call is made, with:
-
-| UI element | Description |
+| Constant | Value |
 |---|---|
-| **Status banner** | Color-coded badge (yellow connecting → blue ringing → green active → red ended) |
-| **Microphone (Input)** | `Select` field populated from `enumerateDevices()` `audioinput` list |
-| **Speaker / Headset (Output)** | `Select` field populated from `audiooutput` devices; uses `setSinkId()` on `<audio>` elements |
-| **Transfer to Agent** | `Link → User` field; on click calls `call_operation(call_id, type=4, target_user)` |
-| **🎤 Mute** button | Toggles `MediaStreamTrack.enabled` on the live audio track (held in `window._smartflo_stream`) |
-| **↗ Transfer** button | Reads the Transfer field and calls the Smartflo transfer API |
-| **End Call** (red primary) | Calls `hangup_call(ref_id)` then auto-closes dialog after 1.5s |
+| `WEBRTC_HANDLER` | `webrtc_dialer.test_softphone_call` |
+| `PSTN_HANDLER` | `pstn_dialer.test_pstn_call` |
+| `WEBRTC_ONLINE_CHECK` | `webrtc_dialer.check_agent_online` |
+| `HANGUP_HANDLER` | `api.client.hangup_call` |
+| `TRANSFER_HANDLER` | `api.client.call_operation` |
 
-Audio device switching (`apply_audio_input` / `apply_audio_output`) re-acquires `getUserMedia` with the selected `deviceId` on input change, and calls `HTMLMediaElement.setSinkId()` on all `<audio>` elements on output change.
+**`start_webrtc_call_flow(frm)`** — the entry point for the WebRTC flow. Requests microphone permission via `navigator.mediaDevices.getUserMedia({audio:true})` before proceeding. If denied, shows guidance. If granted, checks agent status, prompts for destination, then calls `fire_webrtc_call()`.
+
+The active call UI is handled entirely by **`smartflo_phone_panel.js`** (see below), not by a Frappe dialog.
 
 ---
 
@@ -798,12 +790,37 @@ The script attempts to initialize the listener immediately and retries via `frap
 **Path:** `workspace/smartflo/smartflo.json`
 
 Defines a Frappe Workspace (left sidebar navigation portal) named **"SmartFlo"** with:
-- **Icon:** `phone-call`
+- **Icon:** `phone-call` (fallback)
+- **Logo:** `/assets/smartflo/images/smartflo_logo.png` (custom, set via `logo_url`)
 - **Indicator color:** green
 - **Module:** Tatatelebiz Smartflo Integration
 - **Public:** Yes (visible to all users)
 
-Currently has no shortcuts or quick lists configured (empty `content`, `shortcuts`, `links` arrays). The workspace appears in the Frappe desk sidebar as an entry point dashboard for the module.
+### Content Sections
+
+Three card groups are defined under the heading **"Smartflo Telephony Calls"**:
+
+| Card | Links |
+|---|---|
+| **Calls** | Smartflo Logs, Smartflo Call Report |
+| **Configuration** | Smartflo Settings, Agent Mapping |
+| **Auto Dialer** | Smartflo Dialer Queue |
+
+## Desktop Icon
+
+**Path:** `desktop_icon/smartflo.json`
+
+A `Desktop Icon` fixture that controls how SmartFlo appears on the Frappe home desk grid.
+
+| Field | Value |
+|---|---|
+| `icon_type` | `App` |
+| `icon_image` | `/assets/smartflo/images/smartflo_logo.png` |
+| `logo_url` | `/assets/smartflo/images/smartflo_logo.png` |
+| `link` | `/desk/smartflo` |
+| `link_type` | `External` |
+
+The `icon_image` field controls the large icon on the desk home page grid; `logo_url` controls the sidebar header image.
 
 ---
 
@@ -887,15 +904,6 @@ Admin creates Smartflo Dialer Queue records (Pending status)
 ---
 
 ## Development & Tooling
-
-### Ad-hoc Scripts (Not part of the app bundle)
-
-| File | Purpose |
-|---|---|
-| `check_settings.py` | Checks if settings are properly configured by directly reading from the DB. |
-| `dial_test.py` | Standalone script to test an API call directly without going through the Frappe RPC layer. |
-| `test_db.py` | Tests database connectivity and queries. |
-| `test_flow.py` | Simulates the full call flow programmatically for testing purposes. |
 
 ### Linting & Code Style
 

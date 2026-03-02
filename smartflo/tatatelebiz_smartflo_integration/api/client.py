@@ -138,6 +138,7 @@ def initiate_outbound_call(number, reference_doctype=None, reference_name=None):
                 "type": "Outgoing",
                 "status": "Queued",
                 "start_time": frappe.utils.now(),
+                "employee_user_id": frappe.session.user,  # Track which agent initiated the call
             })
             if reference_doctype and reference_name:
                 doc.append("links", {
