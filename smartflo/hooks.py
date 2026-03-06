@@ -11,15 +11,14 @@ app_license = "mit"
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "smartflo",
-# 		"logo": "/assets/smartflo/logo.png",
-# 		"title": "Tatatelebiz Smartflo integration",
-# 		"route": "/smartflo",
-# 		"has_permission": "smartflo.api.permission.has_app_permission"
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "smartflo",
+		"logo": "/assets/smartflo/images/smartflo_logo.png",
+		"title": "SmartFlo",
+		"route": "/desk/smartflo",
+	}
+]
 
 # Includes in <head>
 # ------------------
