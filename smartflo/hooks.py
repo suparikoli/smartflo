@@ -16,7 +16,7 @@ add_to_apps_screen = [
 		"name": "smartflo",
 		"logo": "/assets/smartflo/images/smartflo_logo.png",
 		"title": "SmartFlo",
-		"route": "/desk/smartflo",
+		"route": "/app/smartflo",
 	}
 ]
 
@@ -252,4 +252,3 @@ app_include_js = [
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
-
