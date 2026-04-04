@@ -4,7 +4,7 @@ authors = [
     { name = "Mithtech Innovative Solutions PVT LTD", email = "manoj@mith.tech"}
 ]
 description = "Integration of tatatelebiz with smartflo for mithtech"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
@@ -21,7 +21,7 @@ build-backend = "flit_core.buildapi"
 
 [tool.ruff]
 line-length = 110
-target-version = "py314"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = [

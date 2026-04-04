@@ -25,8 +25,9 @@ def get_columns():
 def get_data(filters):
     conditions = ""
     values = {}
-    
-    if filters.get("date_range"):
+    filters = filters or {}
+
+    if filters.get("date_range") and len(filters["date_range"]) == 2:
         conditions += " AND start_time BETWEEN %(start_date)s AND %(end_date)s"
         values["start_date"] = filters.get("date_range")[0]
         values["end_date"] = filters.get("date_range")[1]
